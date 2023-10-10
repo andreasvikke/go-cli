@@ -77,6 +77,70 @@ func (a *API) getContentByID(id string, query models.ContentQuery, output chan<-
 	output <- content
 }
 
+func (a *API) SetContent(contents []models.Content) *models.ContentResult {
+	var wg sync.WaitGroup
+
+	results := make(chan *models.Content, len(contents))
+	errors := make(chan *models.ContentError, len(contents))
+
+	wg.Add(len(contents))
+	for _, c := range contents {
+		go a.setContent(c, results, errors, &wg)
+	}
+
+	go func() {
+		wg.Wait()
+		close(errors)
+		close(results)
+	}()
+
+	output := &models.ContentResult{
+		Data:   make([]models.Content, len(results)),
+		Errors: make([]models.ContentError, len(errors)),
+	}
+	for val := range results {
+		output.Data = append(output.Data, *val)
+	}
+	for err := range errors {
+		output.Errors = append(output.Errors, *err)
+	}
+
+	return output
+}
+
+func (a *API) setContent(c models.Content, output chan<- *models.Content, errors chan<- *models.ContentError, wg *sync.WaitGroup) {
+	defer wg.Done()
+
+	query := models.ContentQuery{
+		Expand: []string{"body.storage", "version"},
+	}
+
+	endpoint, err := url.ParseRequestURI(a.endPoint.String() + "/content/" + c.Id)
+	if err != nil {
+		errors <- newContentError(c.Id, query.Version, err.Error())
+		return
+	}
+	endpoint.RawQuery = addContentQueryParams(query).Encode()
+
+	currentContent, err := a.SendContentRequest(endpoint, "GET", nil)
+	if err != nil {
+		errors <- newContentError(c.Id, query.Version, err.Error())
+		return
+	}
+
+	c.Version = &models.Version{
+		Number: currentContent.Version.Number + 1,
+	}
+
+	content, err := a.SendContentRequest(endpoint, "PUT", &c)
+	if err != nil {
+		errors <- newContentError(c.Id, query.Version, err.Error())
+		return
+	}
+
+	output <- content
+}
+
 // addContentQueryParams generates URL query parameters based on the provided ContentQuery.
 //
 // Parameters:

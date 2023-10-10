@@ -48,7 +48,7 @@ func (a *API) Request(req *http.Request) ([]byte, error) {
 		return nil, fmt.Errorf("conflict: %s", resp.Status)
 	}
 
-	return nil, fmt.Errorf("unknown response status: %s", resp.Status)
+	return nil, fmt.Errorf("unknown response status: %s, %s", resp.Status, res)
 }
 
 func (a *API) SendContentRequest(endpoint *url.URL, method string, content *models.Content) (*models.Content, error) {

@@ -1,6 +1,11 @@
 package cmd
 
 import (
+	"confluence-poc/src/config"
+	"confluence-poc/src/models"
+	"encoding/json"
+	"fmt"
+
 	"github.com/spf13/cobra"
 )
 
@@ -23,25 +28,28 @@ var setPagesCmd = &cobra.Command{
 func init() {
 	rootCmd.AddCommand(setCmdGroup)
 	setCmdGroup.AddCommand(setPagesCmd)
-
-	// getPagesCmd.Flags().IntVarP(&version, "version", "v", 0, "version")
 }
 
-func setPages(ids []string) {
-	// confluenceClient, err := config.NewConfluenceClient(flags)
-	// if err != nil {
-	// 	fmt.Printf("failed to create confluence client: %s", err)
-	// }
+func setPages(content []string) {
+	confluenceClient, err := config.NewConfluenceClient(flags)
+	if err != nil {
+		fmt.Printf("failed to create confluence client: %s", err)
+	}
 
-	// query := models.ContentQuery{
-	// 	Expand:  []string{"body.storage", "version"},
-	// 	Version: version,
-	// }
+	contentList := []models.Content{}
+	for _, c := range content {
+		var contentMap models.Content
+		err := json.Unmarshal([]byte(c), &contentMap)
+		if err != nil {
+			fmt.Printf("failed to marshal content: %s", err)
+		}
+		contentList = append(contentList, contentMap)
+	}
 
-	// result := confluenceClient.GetContentByID(ids, query)
-	// j, err := json.Marshal(result)
-	// if err != nil {
-	// 	fmt.Printf("failed to marshal result: %s", err)
-	// }
-	// fmt.Println(string(j))
+	result := confluenceClient.SetContent(contentList)
+	j, err := json.Marshal(result)
+	if err != nil {
+		fmt.Printf("failed to marshal result: %s", err)
+	}
+	fmt.Println(string(j))
 }

@@ -1,7 +1,5 @@
 package models
 
-import "time"
-
 type ContentResult struct {
 	Data   []Content      `json:"data"`
 	Errors []ContentError `json:"errors"`
@@ -28,11 +26,11 @@ type Content struct {
 }
 
 type Version struct {
-	By        *User     `json:"by"`
-	When      time.Time `json:"when"`
-	Message   string    `json:"message"`
-	Number    int       `json:"number"`
-	MinorEdit bool      `json:"minorEdit"`
+	By        *User  `json:"by,omitempty"`
+	When      string `json:"when,omitempty"`
+	Message   string `json:"message,omitempty"`
+	Number    int    `json:"number"`
+	MinorEdit bool   `json:"minorEdit"`
 }
 
 type Body struct {
