@@ -77,6 +77,13 @@ func (a *API) getContentByID(id string, query models.ContentQuery, output chan<-
 	output <- content
 }
 
+// SetContent sets the content of the API.
+//
+// Parameters:
+// - contents: a slice of `models.Content` representing the contents to set.
+//
+// Returns:
+// - *models.ContentResult: a pointer to the `models.ContentResult` containing the results of the operation.
 func (a *API) SetContent(contents []models.Content) *models.ContentResult {
 	var wg sync.WaitGroup
 
@@ -112,7 +119,7 @@ func (a *API) setContent(c models.Content, output chan<- *models.Content, errors
 	defer wg.Done()
 
 	query := models.ContentQuery{
-		Expand: []string{"body.storage", "version"},
+		Expand: []string{"version"},
 	}
 
 	endpoint, err := url.ParseRequestURI(a.endPoint.String() + "/content/" + c.Id)

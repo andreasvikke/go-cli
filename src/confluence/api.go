@@ -9,8 +9,12 @@ import (
 // Flags entity as config for user event tracking service
 type API struct {
 	endPoint        *url.URL
-	Client          *http.Client
+	Client          HTTPClient
 	username, token string
+}
+
+type HTTPClient interface {
+	Do(req *http.Request) (*http.Response, error)
 }
 
 func NewAPI(location string, username string, token string) (*API, error) {
@@ -32,4 +36,26 @@ func NewAPI(location string, username string, token string) (*API, error) {
 	api.Client = &http.Client{}
 
 	return &api, nil
+}
+
+func NewAPIWithClient(location string, client HTTPClient) (*API, error) {
+	if len(location) == 0 {
+		return nil, errors.New("url empty")
+	}
+
+	endpoint, err := url.ParseRequestURI(location)
+
+	if err != nil {
+		return nil, err
+	}
+
+	if client == nil {
+		return nil, errors.New("empty http client")
+	}
+
+	a := new(API)
+	a.endPoint = endpoint
+	a.Client = client
+
+	return a, nil
 }
